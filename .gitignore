@@ -4,6 +4,7 @@
 .openml_cache
 *.egg-info
 __pycache__
+*.zip
 
 # TODO: add/edit your venv folder name here (if you use venv)
 automl-tabular-env
