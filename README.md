@@ -202,7 +202,9 @@ Upload a file `team_info.txt` with the list of matriculation IDs of team members
 | y_prop | 0.87 |
 | bike_sharing | 0.935 |
 | brazilian_houses | 0.969 |
-| final test dataset | TBA |
+| final test dataset | 0.873 |
+
+The scores listed are the R² values calculated using scikit-learn's `metrics.r2_score`.
 
 ## Tips
 * If you need to add dependencies that you and your teammates are all on the same page, you can modify the
