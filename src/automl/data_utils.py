@@ -1,8 +1,5 @@
-import src.automl.data as data
-from pathlib import Path
 import pandas as pd
 import numpy as np
-from itertools import chain
 
 def iqr_outlier_det(df, col_name, scale):
     sorted_data = list(df[col_name])
@@ -38,10 +35,3 @@ def drop_outliers(X, y, scale = 1.5):
     X_dropped = df.iloc[:,:-1]
     y_dropped = df.iloc[:,-1]
     return  X_dropped, y_dropped
-
-def normalize_values(X):
-    for col in X.columns:
-        max_val = np.max(X[col])
-        min_val = np.min(X[col])
-        X[col] = [(each-min_val)/(max_val-min_val) for each in X[col].values]
-    return X

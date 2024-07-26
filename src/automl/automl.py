@@ -13,16 +13,11 @@ import pandas as pd
 import numpy as np
 import neps
 import logging
-import pickle
 from pathlib import Path
-from math import sqrt, log2, ceil
-from typing import Any, Callable, Dict, Optional, Sequence, cast
-
-import random
-import torch
+from math import log2, ceil
 
 from src.automl.data import Dataset
-from src.automl.data_utils import normalize_values, drop_outliers
+from src.automl.data_utils import drop_outliers
 from src.automl.utils import r2_acc_to_loss
 
 logger = logging.getLogger(__name__)
@@ -36,13 +31,13 @@ METRICS = {"r2": r2_score}
 ALGORITHMS = {
     #"SK_random_forest": "SK_random_forest_neps_pipeline_space.yaml",
     #"XGB_random_forest": "XGB_random_forest_neps_pipeline_space.yaml",
-    ##"SK_gradient_boost" : "SK_gradient_boost_neps_pipeline_space.yaml",
+    "SK_gradient_boost" : "SK_gradient_boost_neps_pipeline_space.yaml",
     #"SK_ada_boost" : "SK_ada_boost_neps_pipeline_space.yaml",
     #"SK_MLP" : "SK_MLP_neps_pipeline_space.yaml",
     #"SK_gaussian_process": "SK_gaussian_process_neps_pipeline_space.yaml",
     #"SK_bayesian_ridge": "SK_bayesian_ridge_neps_pipeline_space.yaml",
     #"SK_elastic_net": "SK_elastic_net_neps_pipeline_space.yaml",
-    "XGB_dart_boost": "XGB_dart_boost_neps_pipeline_space.yaml"
+    #"XGB_dart_boost": "XGB_dart_boost_neps_pipeline_space.yaml"
     }
 
 class AutoML:
@@ -85,12 +80,19 @@ class AutoML:
 
         run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, iqr_scale)
 
+        scaler = StandardScaler()
+        scaler.fit(run_X_train)
+
+        run_X_train = scaler.transform(run_X_train)
+        run_X_val = scaler.transform(run_X_val)
+
         model = RandomForestRegressor(
             n_estimators=n_estimators,
             criterion=criterion,
             max_depth=max_depth,
             random_state=self.seed
             )
+        
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(run_X_val)
@@ -119,6 +121,12 @@ class AutoML:
 
         run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, iqr_scale)
 
+        scaler = StandardScaler()
+        scaler.fit(run_X_train)
+
+        run_X_train = scaler.transform(run_X_train)
+        run_X_val = scaler.transform(run_X_val)
+
         model = XGBRFRegressor(
             learning_rate=learning_rate,
             max_depth=max_depth,
@@ -127,6 +135,7 @@ class AutoML:
             reg_alpha=reg_alpha,
             random_state=self.seed
             )
+        
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(run_X_val)
@@ -156,6 +165,12 @@ class AutoML:
 
         run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, iqr_scale)
 
+        scaler = StandardScaler()
+        scaler.fit(run_X_train)
+
+        run_X_train = scaler.transform(run_X_train)
+        run_X_val = scaler.transform(run_X_val)
+
         model = GradientBoostingRegressor(
             loss=loss,
             learning_rate=learning_rate,
@@ -165,6 +180,7 @@ class AutoML:
             max_depth=max_depth,
             random_state=self.seed
             )
+        
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(run_X_val)
@@ -191,12 +207,19 @@ class AutoML:
 
         run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, iqr_scale)
 
+        scaler = StandardScaler()
+        scaler.fit(run_X_train)
+
+        run_X_train = scaler.transform(run_X_train)
+        run_X_val = scaler.transform(run_X_val)
+
         model = AdaBoostRegressor(
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             loss=loss,
             random_state=self.seed
             )
+        
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(run_X_val)
@@ -251,6 +274,7 @@ class AutoML:
             learning_rate_init=learning_rate_init,
             random_state=self.seed
             )
+        
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(run_X_val)
@@ -285,6 +309,7 @@ class AutoML:
             alpha=alpha,
             random_state=self.seed
         )
+
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(X=run_X_val.astype(float))
@@ -324,6 +349,7 @@ class AutoML:
             lambda_1=lambda_1,
             lambda_2=lambda_2
         )
+
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(X=run_X_val.astype(float))
@@ -360,6 +386,7 @@ class AutoML:
             l1_ratio=l1_ratio,
             random_state=self.seed
         )
+
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(X=run_X_val.astype(float))
@@ -403,6 +430,7 @@ class AutoML:
             skip_drop=skip_drop,
             random_state=self.seed
         )
+
         model.fit(run_X_train, run_y_train)
 
         val_preds = model.predict(X=run_X_val.astype(float))
@@ -587,8 +615,6 @@ class AutoML:
                         algo_losses.update({algo: loss})
             
             algos_sorted_by_losses = list(dict(sorted(algo_losses.items(), key=lambda key_val: key_val[1])).keys())
-            logger.info(f"\nALGOS DICT: {algo_losses}\n")
-            logger.info(f"\nALGOS: {algos_sorted_by_losses}\n")
             for i in range(int(len(self.selected_algos) / 2)):
                 self.selected_algos.remove(algos_sorted_by_losses[-(i+1)])
             
@@ -632,6 +658,14 @@ class AutoML:
 
                 run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
 
+                scaler = StandardScaler()
+                scaler.fit(run_X_train)
+
+                run_X_train = scaler.transform(run_X_train)
+                run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
+
                 model = RandomForestRegressor(
                     n_estimators=int(param_dict["n_estimators"]),
                     criterion=param_dict["criterion"],
@@ -640,9 +674,6 @@ class AutoML:
                     )
                 
                 model.fit(run_X_train, run_y_train)
-
-                run_X_test = self.dataset.X_test
-                run_y_test = self.dataset.y_test
 
             case "XGB_random_forest":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -653,6 +684,14 @@ class AutoML:
                 )
 
                 run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
+
+                scaler = StandardScaler()
+                scaler.fit(run_X_train)
+
+                run_X_train = scaler.transform(run_X_train)
+                run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
 
                 model = XGBRFRegressor(
                     learning_rate=param_dict["learning_rate"],
@@ -665,9 +704,6 @@ class AutoML:
 
                 model.fit(run_X_train, run_y_train)
 
-                run_X_test = self.dataset.X_test
-                run_y_test = self.dataset.y_test
-
             case "SK_gradient_boost":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
                     self.dataset.X_train,
@@ -677,6 +713,14 @@ class AutoML:
                 )
 
                 run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
+
+                scaler = StandardScaler()
+                scaler.fit(run_X_train)
+
+                run_X_train = scaler.transform(run_X_train)
+                run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
 
                 model = GradientBoostingRegressor(
                     loss=param_dict["loss"],
@@ -690,9 +734,6 @@ class AutoML:
 
                 model.fit(run_X_train, run_y_train)
 
-                run_X_test = self.dataset.X_test
-                run_y_test = self.dataset.y_test
-
             case "SK_ada_boost":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
                     self.dataset.X_train,
@@ -703,6 +744,14 @@ class AutoML:
 
                 run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
 
+                scaler = StandardScaler()
+                scaler.fit(run_X_train)
+
+                run_X_train = scaler.transform(run_X_train)
+                run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
+
                 model = AdaBoostRegressor(
                     n_estimators=int(param_dict["n_estimators"]),
                     learning_rate=param_dict["learning_rate"],
@@ -711,9 +760,6 @@ class AutoML:
                     )
 
                 model.fit(run_X_train, run_y_train)
-
-                run_X_test = self.dataset.X_test
-                run_y_test = self.dataset.y_test
 
             case "SK_MLP":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -735,6 +781,8 @@ class AutoML:
 
                 run_X_train = scaler.transform(run_X_train)
                 run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
 
                 hidden_size_list = [int(param_dict["hidden_layer_sizes"]) for i in range(int(param_dict["hidden_layers"]))]
 
@@ -743,19 +791,13 @@ class AutoML:
                     activation=param_dict["activation"],
                     solver=param_dict["solver"],
                     alpha=param_dict["alpha"],
-                    batch_size=int(param_dict["alpha"]),
+                    batch_size=int(param_dict["batch_size"]),
                     learning_rate=param_dict["learning_rate"],
                     learning_rate_init=param_dict["learning_rate_init"],
                     random_state=self.seed
                     )
 
                 model.fit(run_X_train, run_y_train)
-
-                run_X_test = scaler.transform(self.dataset.X_test)
-                if(self.dataset.y_test is not None):
-                    run_y_test = scaler.transform(self.dataset.y_test)
-                else:
-                    run_y_test = None
 
             case "SK_gaussian_process":
                 ## dropped
@@ -775,6 +817,8 @@ class AutoML:
 
                 run_X_train = scaler.transform(run_X_train)
                 run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
 
                 model = BayesianRidge(
                     alpha_1=param_dict["alpha_1"],
@@ -784,12 +828,6 @@ class AutoML:
                 )
 
                 model.fit(run_X_train, run_y_train)
-
-                run_X_test = scaler.transform(self.dataset.X_test)
-                if(self.dataset.y_test is not None):
-                    run_y_test = scaler.transform(self.dataset.y_test)
-                else:
-                    run_y_test = None
 
             case "SK_elastic_net":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -806,6 +844,8 @@ class AutoML:
 
                 run_X_train = scaler.transform(run_X_train)
                 run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
 
                 model = ElasticNet(
                     alpha=param_dict["alpha"],
@@ -814,12 +854,6 @@ class AutoML:
                 )
 
                 model.fit(run_X_train, run_y_train)
-
-                run_X_test = scaler.transform(self.dataset.X_test)
-                if(self.dataset.y_test is not None):
-                    run_y_test = scaler.transform(self.dataset.y_test)
-                else:
-                    run_y_test = None
 
             case "XGB_dart_boost":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -836,6 +870,8 @@ class AutoML:
 
                 run_X_train = scaler.transform(run_X_train)
                 run_X_val = scaler.transform(run_X_val)
+                run_X_test = scaler.transform(self.dataset.X_test)
+                run_y_test = self.dataset.y_test
 
                 model = XGBRegressor(
                     booster="dart",
@@ -848,12 +884,6 @@ class AutoML:
                 )
 
                 model.fit(run_X_train, run_y_train)
-
-                run_X_test = scaler.transform(self.dataset.X_test)
-                if(self.dataset.y_test is not None):
-                    run_y_test = scaler.transform(self.dataset.y_test)
-                else:
-                    run_y_test = None
 
         self.best_model = model
 

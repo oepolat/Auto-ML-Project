@@ -1,16 +1,6 @@
-"""An example run file which loads in a dataset from its files
-and logs the R^2 score on the test set.
-
-In the example data you are given access to the y_test, however
-in the test dataset we will provide later, you will not have access
-to this and you will need to output your predictions for X_test
-to a file, which we will grade using github classrooms!
-"""
 from __future__ import annotations
 
 from pathlib import Path
-from sklearn.metrics import r2_score
-import numpy as np
 from automl.data import Dataset
 from automl.automl import AutoML
 from automl.utils import set_seeds

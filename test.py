@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from sklearn.metrics import r2_score
-import numpy as np
 from automl.data import Dataset
 from automl.automl import AutoML
 from automl.utils import set_seeds
