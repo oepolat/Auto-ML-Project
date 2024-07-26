@@ -34,28 +34,16 @@ RESULTDIR = FILE.parent.parent.parent / "results"
 METRICS = {"r2": r2_score}
 
 ALGORITHMS = {
-    "SK_random_forest": "SK_random_forest_neps_pipeline_space.yaml",
+    #"SK_random_forest": "SK_random_forest_neps_pipeline_space.yaml",
     #"XGB_random_forest": "XGB_random_forest_neps_pipeline_space.yaml",
-    #"SK_gradient_boost" : "SK_gradient_boost_neps_pipeline_space.yaml",
+    ##"SK_gradient_boost" : "SK_gradient_boost_neps_pipeline_space.yaml",
     #"SK_ada_boost" : "SK_ada_boost_neps_pipeline_space.yaml",
     #"SK_MLP" : "SK_MLP_neps_pipeline_space.yaml",
     #"SK_gaussian_process": "SK_gaussian_process_neps_pipeline_space.yaml",
     #"SK_bayesian_ridge": "SK_bayesian_ridge_neps_pipeline_space.yaml",
     #"SK_elastic_net": "SK_elastic_net_neps_pipeline_space.yaml",
-    #"XGB_dart_boost": "XGB_dart_boost_neps_pipeline_space.yaml"
+    "XGB_dart_boost": "XGB_dart_boost_neps_pipeline_space.yaml"
     }
-
-ALGORITHM_PARAM_COUNTS = {
-    "SK_random_forest": 5,
-    "XGB_random_forest": 7,
-    "SK_gradient_boost" : 8,
-    "SK_ada_boost" : 5,
-    "SK_MLP" : 10,
-    #"SK_gaussian_process": 3,
-    "SK_bayesian_ridge": 6,
-    "SK_elastic_net": 4,
-    "XGB_dart_boost": 7
-}
 
 class AutoML:
 
@@ -432,6 +420,7 @@ class AutoML:
 
         curr_pipeline_space = ALGORITHMS[self.curr_algo]
 
+        logger.info(f"Running: {self.curr_algo}")
         match self.curr_algo:
             case "SK_random_forest":
                 neps.run(
@@ -588,7 +577,7 @@ class AutoML:
             algo_losses = {}
             # load losses to algo losses
             for algo in self.selected_algos:
-                CSVDIR = FILE.parent.parent.parent / "results" / ("task_" + self.task_id + "_" + self.curr_algo) / "summary_csv"
+                CSVDIR = FILE.parent.parent.parent / "results" / ("task_" + self.task_id + "_" + algo) / "summary_csv"
                 csv = pd.read_csv(CSVDIR / "config_data.csv")
 
                 col_names = csv.columns.values
@@ -597,9 +586,11 @@ class AutoML:
                         loss = csv.iloc[0][col_name]
                         algo_losses.update({algo: loss})
             
-            algos_sorted_by_losses = sorted(algo_losses)
+            algos_sorted_by_losses = list(dict(sorted(algo_losses.items(), key=lambda key_val: key_val[1])).keys())
+            logger.info(f"\nALGOS DICT: {algo_losses}\n")
+            logger.info(f"\nALGOS: {algos_sorted_by_losses}\n")
             for i in range(int(len(self.selected_algos) / 2)):
-                self.selected_algos.remove(algos_sorted_by_losses[i])
+                self.selected_algos.remove(algos_sorted_by_losses[-(i+1)])
             
             logger.info(f"Selected algorithm(s) to pass the halving: {self.selected_algos}")
             self.curr_per_model_epoch = self.curr_per_model_epoch * 2
@@ -618,9 +609,9 @@ class AutoML:
         
         TXTDIR = FILE.parent.parent.parent
         best_algo_file = open(TXTDIR / "selected_algorithm.txt", "r")
-        self.curr_algo = best_algo_file.read()
+        algo = best_algo_file.read()
         
-        CSVDIR = FILE.parent.parent.parent / "results" / ("task_" + self.task_id + "_" + self.curr_algo) / "summary_csv"
+        CSVDIR = FILE.parent.parent.parent / "results" / ("task_" + self.task_id + "_" + algo) / "summary_csv"
 
         csv = pd.read_csv(CSVDIR / "config_data.csv")
 
@@ -630,7 +621,7 @@ class AutoML:
             if("config" in col_name and "config_id" not in col_name):
                 param_dict.update({col_name.replace("config.", ""): csv.iloc[0][col_name]})
         
-        match self.curr_algo:
+        match algo:
             case "SK_random_forest":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
                     self.dataset.X_train,
