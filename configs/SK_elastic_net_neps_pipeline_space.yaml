@@ -1,0 +1,18 @@
+pipeline_space:
+  val_split:
+    type: float
+    lower: 0.1
+    upper: 0.33
+  iqr_scale:
+    type: float
+    lower: 1
+    upper: 2
+  alpha:
+    type: float
+    lower: 0
+    upper: 2
+  l1_ratio:
+    type: float
+    lower: 0
+    upper: 1
+  

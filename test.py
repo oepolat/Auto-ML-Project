@@ -1,11 +1,3 @@
-"""An example run file which loads in a dataset from its files
-and logs the R^2 score on the test set.
-
-In the example data you are given access to the y_test, however
-in the test dataset we will provide later, you will not have access
-to this and you will need to output your predictions for X_test
-to a file, which we will grade using github classrooms!
-"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -29,17 +21,16 @@ def main(
     fold: int,
     output_path: Path,
     seed: int,
-    datadir: Path,
-    total_evaluations: int
+    datadir: Path
 ):
     set_seeds(seed)
 
     dataset = Dataset.load(datadir=datadir, task=task, fold=fold)
 
-    logger.info("Fitting AutoML")
+    logger.info("Loading AutoML")
 
-    automl = AutoML(task_id=task, output_path=output_path, seed=seed, dataset=dataset, total_evaluations=total_evaluations)
-    automl.run()
+    automl = AutoML(task_id=task, output_path=output_path, seed=seed, dataset=dataset)
+    automl.load_and_test_best_model()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -80,14 +71,6 @@ if __name__ == "__main__":
         )
     )
     parser.add_argument(
-        "--total_evaluations",
-        type=int,
-        default=50,
-        help=(
-            "Maximum evaluations for the neps optimizer."
-        )
-    )
-    parser.add_argument(
         "--datadir",
         type=Path,
         default=DATADIR,
@@ -119,6 +102,5 @@ if __name__ == "__main__":
         fold=args.fold,
         output_path=args.output_path,
         datadir=args.datadir,
-        seed=args.seed,
-        total_evaluations=args.total_evaluations
+        seed=args.seed
     )

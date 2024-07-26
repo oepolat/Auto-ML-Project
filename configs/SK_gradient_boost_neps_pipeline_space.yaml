@@ -1,0 +1,30 @@
+pipeline_space:
+  val_split:
+    type: float
+    lower: 0.1
+    upper: 0.33
+  iqr_scale:
+    type: float
+    lower: 1
+    upper: 2
+  loss:
+    choices: ["squared_error", "huber", "quantile"]
+  learning_rate:
+    type: float
+    lower: 0.01
+    upper: 0.5
+    log: true
+  n_estimators:
+    type: int
+    lower: 50
+    upper: 250
+  subsample:
+    type: float
+    lower: 0.1
+    upper: 1
+  criterion:
+    choices: ["squared_error", "friedman_mse"]
+  max_depth:
+    type: int
+    lower: 5
+    upper: 35

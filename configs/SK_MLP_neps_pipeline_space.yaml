@@ -1,0 +1,32 @@
+pipeline_space:
+  val_split:
+    type: float
+    lower: 0.1
+    upper: 0.33
+  iqr_scale:
+    type: float
+    lower: 1
+    upper: 2
+  hidden_layer_sizes:
+    choices: [32, 64, 128]
+  hidden_layers:
+    type: int
+    lower: 1
+    upper: 3
+  activation:
+    choices: ["logistic", "tanh", "relu"]
+  solver:
+    choices: ["lbfgs", "sgd", "adam"]
+  alpha:
+    type: float
+    lower: 0.00005
+    upper: 0.00015
+  batch_size:
+    choices: [16, 32, 64]
+  learning_rate:
+    choices: ["constant", "invscaling", "adaptive"]
+  learning_rate_init:
+    type: float
+    lower: 0.0005
+    upper: 0.005
+    log: true

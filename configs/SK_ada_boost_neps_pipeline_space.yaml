@@ -1,0 +1,20 @@
+pipeline_space:
+  val_split:
+    type: float
+    lower: 0.1
+    upper: 0.33
+  iqr_scale:
+    type: float
+    lower: 1
+    upper: 2
+  n_estimators:
+    type: int
+    lower: 25
+    upper: 200
+  learning_rate:
+    type: float
+    lower: 0.01
+    upper: 1.5
+    log: true
+  loss:
+    choices: ["linear", "square", "exponential"]

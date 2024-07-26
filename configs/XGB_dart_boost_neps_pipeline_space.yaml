@@ -1,0 +1,28 @@
+pipeline_space:
+  val_split:
+    type: float
+    lower: 0.1
+    upper: 0.33
+  iqr_scale:
+    type: float
+    lower: 1
+    upper: 2
+  learning_rate:
+    type: float
+    lower: 0.1
+    upper: 2
+    log: true
+  max_depth:
+    type: int
+    lower: 5
+    upper: 25
+  sampling_method:
+    choices: ["uniform"]
+  rate_drop:
+    type: float
+    lower: 0
+    upper: 0.1
+  skip_drop:
+    type: float
+    lower: 0
+    upper: 0.5
