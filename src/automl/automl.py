@@ -641,6 +641,9 @@ class AutoML:
                 
                 model.fit(run_X_train, run_y_train)
 
+                run_X_test = self.dataset.X_test
+                run_y_test = self.dataset.y_test
+
             case "XGB_random_forest":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
                     self.dataset.X_train,
@@ -661,6 +664,9 @@ class AutoML:
                     )
 
                 model.fit(run_X_train, run_y_train)
+
+                run_X_test = self.dataset.X_test
+                run_y_test = self.dataset.y_test
 
             case "SK_gradient_boost":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -684,6 +690,9 @@ class AutoML:
 
                 model.fit(run_X_train, run_y_train)
 
+                run_X_test = self.dataset.X_test
+                run_y_test = self.dataset.y_test
+
             case "SK_ada_boost":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
                     self.dataset.X_train,
@@ -702,6 +711,9 @@ class AutoML:
                     )
 
                 model.fit(run_X_train, run_y_train)
+
+                run_X_test = self.dataset.X_test
+                run_y_test = self.dataset.y_test
 
             case "SK_MLP":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -739,6 +751,12 @@ class AutoML:
 
                 model.fit(run_X_train, run_y_train)
 
+                run_X_test = scaler.transform(self.dataset.X_test)
+                if(self.dataset.y_test is not None):
+                    run_y_test = scaler.transform(self.dataset.y_test)
+                else:
+                    run_y_test = None
+
             case "SK_gaussian_process":
                 ## dropped
                 pass
@@ -767,6 +785,12 @@ class AutoML:
 
                 model.fit(run_X_train, run_y_train)
 
+                run_X_test = scaler.transform(self.dataset.X_test)
+                if(self.dataset.y_test is not None):
+                    run_y_test = scaler.transform(self.dataset.y_test)
+                else:
+                    run_y_test = None
+
             case "SK_elastic_net":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
                     self.dataset.X_train,
@@ -790,6 +814,12 @@ class AutoML:
                 )
 
                 model.fit(run_X_train, run_y_train)
+
+                run_X_test = scaler.transform(self.dataset.X_test)
+                if(self.dataset.y_test is not None):
+                    run_y_test = scaler.transform(self.dataset.y_test)
+                else:
+                    run_y_test = None
 
             case "XGB_dart_boost":
                 run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
@@ -819,6 +849,12 @@ class AutoML:
 
                 model.fit(run_X_train, run_y_train)
 
+                run_X_test = scaler.transform(self.dataset.X_test)
+                if(self.dataset.y_test is not None):
+                    run_y_test = scaler.transform(self.dataset.y_test)
+                else:
+                    run_y_test = None
+
         self.best_model = model
 
         val_preds = model.predict(run_X_val)
@@ -827,12 +863,14 @@ class AutoML:
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Final Validation score: {val_score:.4f} Loss: {loss: .4f}")
 
-        test_preds = model.predict(self.dataset.X_test)
+        test_preds = model.predict(run_X_test)
 
         logger.info("Writing predictions to disk")
         with self.output_path[0].open("wb") as f:
             np.save(f, test_preds)
-
-        test_score = self.metric(self.dataset.y_test, test_preds) 
-        loss = r2_acc_to_loss(test_score)
-        logger.info(f"Final Test score: {test_score:.4f} Loss: {loss: .4f}")
+        if(run_y_test is not None):
+            test_score = self.metric(run_y_test, test_preds) 
+            loss = r2_acc_to_loss(test_score)
+            logger.info(f"Final Test score: {test_score:.4f} Loss: {loss: .4f}")
+        else:
+            logger.info(f"Final Test score failed: Test data Y doesnt exist.")
