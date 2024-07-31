@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 import neps
 import logging
+import pickle
+import os
 from pathlib import Path
 from math import log2, ceil
 
@@ -24,20 +26,23 @@ logger = logging.getLogger(__name__)
 
 FILE = Path(__file__).absolute().resolve()
 
+# so many parents
 RESULTDIR = FILE.parent.parent.parent / "results"
+MODELDIR = FILE.parent.parent.parent / "models"
+TXTDIR = FILE.parent.parent.parent
 
 METRICS = {"r2": r2_score}
 
 ALGORITHMS = {
-    #"SK_random_forest": "SK_random_forest_neps_pipeline_space.yaml",
-    #"XGB_random_forest": "XGB_random_forest_neps_pipeline_space.yaml",
+    "SK_random_forest": "SK_random_forest_neps_pipeline_space.yaml",
+    "XGB_random_forest": "XGB_random_forest_neps_pipeline_space.yaml",
     "SK_gradient_boost" : "SK_gradient_boost_neps_pipeline_space.yaml",
-    #"SK_ada_boost" : "SK_ada_boost_neps_pipeline_space.yaml",
-    #"SK_MLP" : "SK_MLP_neps_pipeline_space.yaml",
+    "SK_ada_boost" : "SK_ada_boost_neps_pipeline_space.yaml",
+    "SK_MLP" : "SK_MLP_neps_pipeline_space.yaml",
     #"SK_gaussian_process": "SK_gaussian_process_neps_pipeline_space.yaml",
-    #"SK_bayesian_ridge": "SK_bayesian_ridge_neps_pipeline_space.yaml",
-    #"SK_elastic_net": "SK_elastic_net_neps_pipeline_space.yaml",
-    #"XGB_dart_boost": "XGB_dart_boost_neps_pipeline_space.yaml"
+    "SK_bayesian_ridge": "SK_bayesian_ridge_neps_pipeline_space.yaml",
+    "SK_elastic_net": "SK_elastic_net_neps_pipeline_space.yaml",
+    "XGB_dart_boost": "XGB_dart_boost_neps_pipeline_space.yaml"
     }
 
 class AutoML:
@@ -58,6 +63,11 @@ class AutoML:
         self.total_evaluations = total_evaluations
         self.selected_algos = list(ALGORITHMS.keys())
         self.metric = METRICS[metric]
+        self.best_val = -np.inf
+
+        # create task folder inside models
+        if not os.path.exists(MODELDIR / self.task_id):
+            os.makedirs(MODELDIR / self.task_id)
 
     #####################
     # PIPELINES
@@ -97,6 +107,10 @@ class AutoML:
 
         val_preds = model.predict(run_X_val)
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -140,6 +154,10 @@ class AutoML:
 
         val_preds = model.predict(run_X_val)
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -185,6 +203,10 @@ class AutoML:
 
         val_preds = model.predict(run_X_val)
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -224,6 +246,10 @@ class AutoML:
 
         val_preds = model.predict(run_X_val)
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -251,10 +277,10 @@ class AutoML:
 
         run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, iqr_scale)
 
-        run_X_train = run_X_train.to_numpy(dtype=np.float32)
-        run_y_train = run_y_train.to_numpy(dtype=np.float32)
-        run_X_val = run_X_val.to_numpy(dtype=np.float32)
-        run_y_val = run_y_val.to_numpy(dtype=np.float32)
+        run_X_train = run_X_train.to_numpy(dtype=np.float64)
+        run_y_train = run_y_train.to_numpy(dtype=np.float64)
+        run_X_val = run_X_val.to_numpy(dtype=np.float64)
+        run_y_val = run_y_val.to_numpy(dtype=np.float64)
 
         scaler = StandardScaler()
         scaler.fit(run_X_train)
@@ -279,6 +305,10 @@ class AutoML:
 
         val_preds = model.predict(run_X_val)
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -314,6 +344,10 @@ class AutoML:
 
         val_preds = model.predict(X=run_X_val.astype(float))
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -354,6 +388,10 @@ class AutoML:
 
         val_preds = model.predict(X=run_X_val.astype(float))
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -391,6 +429,10 @@ class AutoML:
 
         val_preds = model.predict(X=run_X_val.astype(float))
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -435,6 +477,10 @@ class AutoML:
 
         val_preds = model.predict(X=run_X_val.astype(float))
         val_score = self.metric(run_y_val, val_preds)
+        if(val_score > self.best_val):
+            self.best_val = val_score
+            with open(MODELDIR / self.task_id / (self.curr_algo + ".pickle"), 'wb') as model_file:
+                pickle.dump(model, model_file, protocol=pickle.HIGHEST_PROTOCOL)
         loss = r2_acc_to_loss(val_score)
         logger.info(f"Validation score: {val_score:.4f} Loss: {loss: .4f}")
         return loss
@@ -503,18 +549,21 @@ class AutoML:
                     post_run_summary=True,
                 )
             case "SK_MLP":
-                neps.run(
-                    run_pipeline=self.regression_pipeline_SK_MLP,
-                    root_directory=root_directory,
-                    pipeline_space="configs/" + curr_pipeline_space,
-                    max_evaluations_total=total_evaluations,
-                    searcher="bayesian_optimization",
-                    initial_design_size=15,
-                    acquisition="EI",
-                    overwrite_working_directory=True,
-                    task_id=str(task_id) + "_" + self.curr_algo,
-                    post_run_summary=True,
-                )
+                try:
+                    neps.run(
+                        run_pipeline=self.regression_pipeline_SK_MLP,
+                        root_directory=root_directory,
+                        pipeline_space="configs/" + curr_pipeline_space,
+                        max_evaluations_total=total_evaluations,
+                        searcher="bayesian_optimization",
+                        initial_design_size=15,
+                        acquisition="EI",
+                        overwrite_working_directory=True,
+                        task_id=str(task_id) + "_" + self.curr_algo,
+                        post_run_summary=True,
+                    )
+                except:
+                    pass
             case "SK_gaussian_process":
                 neps.run(
                     run_pipeline=self.regression_pipeline_SK_gaussian_process,
@@ -605,14 +654,18 @@ class AutoML:
             algo_losses = {}
             # load losses to algo losses
             for algo in self.selected_algos:
-                CSVDIR = FILE.parent.parent.parent / "results" / ("task_" + self.task_id + "_" + algo) / "summary_csv"
-                csv = pd.read_csv(CSVDIR / "config_data.csv")
+                try:
+                    CSVDIR = FILE.parent.parent.parent / "results" / ("task_" + self.task_id + "_" + algo) / "summary_csv"
+                    csv = pd.read_csv(CSVDIR / "config_data.csv")
 
-                col_names = csv.columns.values
-                for col_name in col_names:
-                    if("loss" in col_name):
-                        loss = csv.iloc[0][col_name]
-                        algo_losses.update({algo: loss})
+                    col_names = csv.columns.values
+                    for col_name in col_names:
+                        if("loss" in col_name):
+                            loss = csv.iloc[0][col_name]
+                            algo_losses.update({algo: loss})
+                except:
+                    loss = np.inf
+                    algo_losses.update({algo: loss})
             
             algos_sorted_by_losses = list(dict(sorted(algo_losses.items(), key=lambda key_val: key_val[1])).keys())
             for i in range(int(len(self.selected_algos) / 2)):
@@ -621,8 +674,6 @@ class AutoML:
             logger.info(f"Selected algorithm(s) to pass the halving: {self.selected_algos}")
             self.curr_per_model_epoch = self.curr_per_model_epoch * 2
         
-        # so many parents
-        TXTDIR = FILE.parent.parent.parent
         best_algo_file = open(TXTDIR / "selected_algorithm.txt", "w")
         best_algo_file.write(self.selected_algos[0])
         best_algo_file.close()
@@ -633,7 +684,6 @@ class AutoML:
         self
     ) -> None:
         
-        TXTDIR = FILE.parent.parent.parent
         best_algo_file = open(TXTDIR / "selected_algorithm.txt", "r")
         algo = best_algo_file.read()
         
@@ -646,246 +696,26 @@ class AutoML:
         for col_name in col_names:
             if("config" in col_name and "config_id" not in col_name):
                 param_dict.update({col_name.replace("config.", ""): csv.iloc[0][col_name]})
-        
-        match algo:
-            case "SK_random_forest":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
 
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
+        run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
+            self.dataset.X_train,
+            self.dataset.y_train,
+            random_state=self.seed,
+            test_size=param_dict["val_split"],
+        )
 
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
+        run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
 
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
+        scaler = StandardScaler()
+        scaler.fit(run_X_train)
 
-                model = RandomForestRegressor(
-                    n_estimators=int(param_dict["n_estimators"]),
-                    criterion=param_dict["criterion"],
-                    max_depth=int(param_dict["max_depth"]),
-                    random_state=self.seed
-                    )
-                
-                model.fit(run_X_train, run_y_train)
+        run_X_train = scaler.transform(run_X_train)
+        run_X_val = scaler.transform(run_X_val)
+        run_X_test = scaler.transform(self.dataset.X_test)
+        run_y_test = self.dataset.y_test
 
-            case "XGB_random_forest":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                model = XGBRFRegressor(
-                    learning_rate=param_dict["learning_rate"],
-                    max_depth=int(param_dict["max_depth"]),
-                    sampling_method=param_dict["sampling_method"],
-                    reg_lambda=param_dict["reg_lambda"],
-                    reg_alpha=param_dict["reg_alpha"],
-                    random_state=self.seed
-                    )
-
-                model.fit(run_X_train, run_y_train)
-
-            case "SK_gradient_boost":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                model = GradientBoostingRegressor(
-                    loss=param_dict["loss"],
-                    learning_rate=param_dict["learning_rate"],
-                    n_estimators=int(param_dict["n_estimators"]),
-                    subsample=param_dict["subsample"],
-                    criterion=param_dict["criterion"],
-                    max_depth=int(param_dict["max_depth"]),
-                    random_state=self.seed
-                    )
-
-                model.fit(run_X_train, run_y_train)
-
-            case "SK_ada_boost":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                model = AdaBoostRegressor(
-                    n_estimators=int(param_dict["n_estimators"]),
-                    learning_rate=param_dict["learning_rate"],
-                    loss=param_dict["loss"],
-                    random_state=self.seed
-                    )
-
-                model.fit(run_X_train, run_y_train)
-
-            case "SK_MLP":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                run_X_train = run_X_train.to_numpy(dtype=np.float32)
-                run_y_train = run_y_train.to_numpy(dtype=np.float32)
-                run_X_val = run_X_val.to_numpy(dtype=np.float32)
-                run_y_val = run_y_val.to_numpy(dtype=np.float32)
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                hidden_size_list = [int(param_dict["hidden_layer_sizes"]) for i in range(int(param_dict["hidden_layers"]))]
-
-                model = MLPRegressor(
-                    hidden_layer_sizes=hidden_size_list,
-                    activation=param_dict["activation"],
-                    solver=param_dict["solver"],
-                    alpha=param_dict["alpha"],
-                    batch_size=int(param_dict["batch_size"]),
-                    learning_rate=param_dict["learning_rate"],
-                    learning_rate_init=param_dict["learning_rate_init"],
-                    random_state=self.seed
-                    )
-
-                model.fit(run_X_train, run_y_train)
-
-            case "SK_gaussian_process":
-                ## dropped
-                pass
-            case "SK_bayesian_ridge":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                model = BayesianRidge(
-                    alpha_1=param_dict["alpha_1"],
-                    alpha_2=param_dict["alpha_2"],
-                    lambda_1=param_dict["lambda_1"],
-                    lambda_2=param_dict["lambda_2"]
-                )
-
-                model.fit(run_X_train, run_y_train)
-
-            case "SK_elastic_net":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                model = ElasticNet(
-                    alpha=param_dict["alpha"],
-                    l1_ratio=param_dict["l1_ratio"],
-                    random_state=self.seed
-                )
-
-                model.fit(run_X_train, run_y_train)
-
-            case "XGB_dart_boost":
-                run_X_train, run_X_val, run_y_train, run_y_val = train_test_split(
-                    self.dataset.X_train,
-                    self.dataset.y_train,
-                    random_state=self.seed,
-                    test_size=param_dict["val_split"],
-                )
-
-                run_X_train, run_y_train = drop_outliers(run_X_train, run_y_train, param_dict["iqr_scale"])
-
-                scaler = StandardScaler()
-                scaler.fit(run_X_train)
-
-                run_X_train = scaler.transform(run_X_train)
-                run_X_val = scaler.transform(run_X_val)
-                run_X_test = scaler.transform(self.dataset.X_test)
-                run_y_test = self.dataset.y_test
-
-                model = XGBRegressor(
-                    booster="dart",
-                    learning_rate=param_dict["learning_rate"],
-                    max_depth=int(param_dict["max_depth"]),
-                    sampling_method=param_dict["sampling_method"],
-                    rate_drop=param_dict["rate_drop"],
-                    skip_drop=param_dict["skip_drop"],
-                    random_state=self.seed
-                )
-
-                model.fit(run_X_train, run_y_train)
-
-        self.best_model = model
+        with open(MODELDIR / self.task_id / (algo + ".pickle"), 'rb') as model_file:
+            model = pickle.load(model_file)
 
         val_preds = model.predict(run_X_val)
         val_score = self.metric(run_y_val, val_preds)

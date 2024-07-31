@@ -6,6 +6,7 @@
 __pycache__
 *.zip
 results
+models
 
 # TODO: add/edit your venv folder name here (if you use venv)
 automl-tabular-env

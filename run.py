@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--total_evaluations",
         type=int,
-        default=50,
+        default=512,
         help=(
             "Maximum evaluations for the neps optimizer."
         )
