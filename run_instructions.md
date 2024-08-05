@@ -23,27 +23,26 @@ python download-openml.py --task <task_id>
 **Running the AutoML**
 
 To run the AutoML pipeline, the run command must be used to generate a fully trained selected model inside the "models/task_id" folder.
+It also follows the same parsing on the example code so total epoch numbers can also be given as arguments. (for details check run.py)
 
 Run command for the brazilian houses dataset:
 
-EDİT
 ```bash
 python run.py --task brazilian_houses --seed 42
 ```
 
 Run command for the exam dataset:
 
-EDİT
 ```bash
 python run.py --task test exam --seed 42
 ```
 
 ## Running the Test and Getting Predictions
 
-After the run command, the test command must be used to load the model from the models/task_id folder. The model is selected by reading from the selected_algorithm.txt file which is written after the run command.
+After the run command, the test command must be used to load the model from the models/task_id folder. The model is selected by reading from the selected_algorithm.txt file which is written after the run command. It also follows similar parsing to example code so the output path can be also given as arguments. (for details check test.py)
 
 ```bash
-python test.py --task exam_dataset --seed 42
+python test.py --task exam_dataset --fold 1 --seed 42
 ```
 
 Depending on whether the dataset has y_test values, it will print a validation and test score or it will print validation score and a test prediction to the given output directory.

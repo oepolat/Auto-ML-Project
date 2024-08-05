@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output-path",
         type=Path,
-        default=Path("data/exam_dataset/1/predictions.npy"),
+        default=Path("final_test_preds.npy"),
         help=(
             "The path to save the predictions to."
             " By default this will just save to './predictions.npy'."
